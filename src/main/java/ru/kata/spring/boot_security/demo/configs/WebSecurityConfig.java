@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.rememberme.InMemoryTokenR
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
+
 import javax.sql.DataSource;
 
 @Configuration
@@ -53,21 +54,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .rememberMe()
                 .tokenRepository(this.persistentTokenRepository())
-                .tokenValiditySeconds(1*24*60*60)
+                .tokenValiditySeconds(1*24*60*60);
 
     }
 
-    // аутентификация inMemory
+    @Autowired
+    protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
+    }
     @Bean
-    @Override
-    public UserDetailsService userDetailsService() {
-        UserDetails user =
-                User.withDefaultPasswordEncoder()
-                        .username("user")
-                        .password("user")
-                        .roles("USER")
-                        .build();
-
-        return new InMemoryUserDetailsManager(user);
+    public PersistentTokenRepository persistentTokenRepository(){
+        InMemoryTokenRepositoryImpl memory =new InMemoryTokenRepositoryImpl();
+        return memory;
     }
 }
