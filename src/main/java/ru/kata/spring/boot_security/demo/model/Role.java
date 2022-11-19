@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Entity
 public class Role implements GrantedAuthority {
-    @id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String role;
