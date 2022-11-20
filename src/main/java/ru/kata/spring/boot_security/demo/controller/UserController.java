@@ -15,58 +15,71 @@ import java.util.List;
 @Controller
 @ComponentScan(basePackages = "demo")
 public class UserController {
+
     private UserService userService;
+
     @Autowired
-    public UserController(UserService userService){
+    public UserController(UserService userService) {
         this.userService = userService;
     }
+
     @GetMapping(value = "/")
-    public String startPage(){
+    public String startPage() {
         return "startPage";
     }
+
+
     @GetMapping(value = "/registration")
-    public String registration(ModelMap modelMap){
-        modelMap.addAttribute("user", new User());
+    public String registration(ModelMap model) {
+        model.addAttribute("user", new User());
         return "registration";
     }
-    @PostMapping (value = "/registration")
-    public String addRegistration(@ModelAttribute("user")@Valid User user){
+
+    @PostMapping(value = "/registration")
+    public String addRegistration(@ModelAttribute("user") @Valid User user) {
+
         userService.saveUser(user);
         User user1 = userService.findUserByEmail(user.getEmail());
         System.out.println(user1);
+
         return "redirect:/login";
     }
+
     @GetMapping(value = "/user")
-    public String getUser(Principal principal, ModelMap modelMap){
+    public String getUser(Principal principal, ModelMap model) {
         String email = principal.getName();
         System.out.println(email);
-        modelMap.addAttribute("user", userService.findUserByEmail(email));
+        model.addAttribute("user", userService.findUserByEmail(email));
         return "user";
     }
+
     @GetMapping(value = "/admin")
-    public String getAllUsers(Principal principal, ModelMap modelMap){
+    public String getAllUsers(Principal principal, ModelMap model) {
         List<User> users = userService.getAllUsers();
-        modelMap.addAttribute("users", users);
-        modelMap.addAttribute("admin", userService.findUserByEmail(principal.getName()));
+        model.addAttribute("users", users);
+        model.addAttribute("admin",
+                userService.findUserByEmail(principal.getName()));
         return "admin1";
     }
 
-    @DeleteMapping (value = "/delete/{id}")
-    public String delete(@PathVariable ("id") Long id){
+    @DeleteMapping(value = "/delete/{id}")
+    public String delete(@PathVariable("id") Long id) {
         userService.deleteUser(id);
         System.out.println("DELETE USER ID:" + id);
         return "redirect:/admin";
     }
 
     @GetMapping(value = "/admin/edit/{id}")
-    public String editUser(@PathVariable("id") Long id, ModelMap modelMap){
-        modelMap.addAttribute("user", userService.getUser(id));
-        modelMap.addAttribute("roles", userService.getAllRoles());
+    public String editUser(@PathVariable("id") Long id, ModelMap model) {
+        model.addAttribute("user", userService.getUser(id));
+        model.addAttribute("roles", userService.getAllRoles());
         return "edit";
     }
-    @GetMapping(value = "/admin/edit/{id}")
+
+    @PatchMapping(value = "/admin/edit/{id}")
     public String edit(@ModelAttribute("user") @Valid User user) {
         userService.editUser(user);
         return "redirect:/admin";
     }
+
 }

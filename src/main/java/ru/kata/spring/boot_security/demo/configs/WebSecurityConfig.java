@@ -13,7 +13,6 @@ import org.springframework.security.web.authentication.rememberme.InMemoryTokenR
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-
 import javax.sql.DataSource;
 
 @Configuration
@@ -35,7 +34,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http    .csrf()
+        http
+                .csrf()
                 .disable()
                 .authorizeRequests()
                 .antMatchers("/registration", "/", "/login").permitAll()
