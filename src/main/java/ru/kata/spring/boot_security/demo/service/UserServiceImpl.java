@@ -1,73 +1,80 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repository.RoleRepo;
-import ru.kata.spring.boot_security.demo.repository.UserRepo;
+import ru.kata.spring.boot_security.demo.repository.RoleRepository;
+import ru.kata.spring.boot_security.demo.repository.UserRepository;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl implements  UserService{
-    private UserRepo userRepo;
-    private RoleRepo roleRepo;
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+public class UserServiceImpl implements UserService, UserDetailsService {
+
+    private final RoleRepository roleRepository;
+
+    private final UserRepository userRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepo userRepo, RoleRepo roleRepo, BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-    }
-
-    public UserServiceImpl(){
-
+    public UserServiceImpl(RoleRepository roleRepository, UserRepository userRepository) {
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public void saveUser(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        Set<Role> roles = new HashSet<>();
-        roles.add(roleRepo.getById(2L));
-        user.setRoles(roles);
-        userRepo.save(user);
+    @Transactional
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("user not found");
+        }
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));
+    }
+
+    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles) {
+
+        return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     @Override
-    public void deleteUser(Long id) {userRepo.deleteById(id);}
-
-    @Override
-    public User getUser(Long id) {
-        return userRepo.getById(id);
+    public void addUser(User user) {
+        userRepository.save(user);
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepo.findAll();
+    public List<User> getAll() {
+        return userRepository.findAll();
     }
 
     @Override
-    public User findUserByEmail(String email) {
-        return userRepo.findUserByEmail(email);
+    public void deleteUser(long id) {
+        userRepository.deleteById(id);
     }
 
     @Override
-    public List<Role> getAllRoles() {
-        return roleRepo.findAll();
+    public User getById(long id) {
+        return userRepository.getById(id);
     }
 
     @Override
-    public void editUser(User user) {userRepo.save(user);}
-
-    @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        return userRepo.findUserByEmail(userName);
+    public List<Role> roleList() {
+        return roleRepository.findAll();
     }
 }
+

@@ -1,85 +1,29 @@
 package ru.kata.spring.boot_security.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.service.UserService;
+import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
-import javax.validation.Valid;
 import java.security.Principal;
-import java.util.List;
 
 @Controller
-@ComponentScan(basePackages = "demo")
+@RequestMapping("/user")
 public class UserController {
-
-    private UserService userService;
+    private final UserServiceImpl userService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
-    @GetMapping(value = "/")
-    public String startPage() {
-        return "startPage";
-    }
-
-
-    @GetMapping(value = "/registration")
-    public String registration(ModelMap model) {
-        model.addAttribute("user", new User());
-        return "registration";
-    }
-
-    @PostMapping(value = "/registration")
-    public String addRegistration(@ModelAttribute("user") @Valid User user) {
-
-        userService.saveUser(user);
-        User user1 = userService.findUserByEmail(user.getEmail());
-        System.out.println(user1);
-
-        return "redirect:/login";
-    }
-
-    @GetMapping(value = "/user")
-    public String getUser(Principal principal, ModelMap model) {
-        String email = principal.getName();
-        System.out.println(email);
-        model.addAttribute("user", userService.findUserByEmail(email));
+    @GetMapping("")
+    public String index(Principal principal, Model model) {
+        User user1 = userService.findByUsername(principal.getName());
+        model.addAttribute("user", user1);
         return "user";
     }
-
-    @GetMapping(value = "/admin")
-    public String getAllUsers(Principal principal, ModelMap model) {
-        List<User> users = userService.getAllUsers();
-        model.addAttribute("users", users);
-        model.addAttribute("admin",
-                userService.findUserByEmail(principal.getName()));
-        return "admin1";
-    }
-
-    @DeleteMapping(value = "/delete/{id}")
-    public String delete(@PathVariable("id") Long id) {
-        userService.deleteUser(id);
-        System.out.println("DELETE USER ID:" + id);
-        return "redirect:/admin";
-    }
-
-    @GetMapping(value = "/admin/edit/{id}")
-    public String editUser(@PathVariable("id") Long id, ModelMap model) {
-        model.addAttribute("user", userService.getUser(id));
-        model.addAttribute("roles", userService.getAllRoles());
-        return "edit";
-    }
-
-    @PatchMapping(value = "/admin/edit/{id}")
-    public String edit(@ModelAttribute("user") @Valid User user) {
-        userService.editUser(user);
-        return "redirect:/admin";
-    }
-
 }
